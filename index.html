@@ -1,0 +1,411 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: transparent; }
+#app { font-family: var(--font-sans); padding: 1.5rem 1rem; max-width: 860px; margin: 0 auto; }
+h2.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab { padding: 6px 16px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--color-border-secondary); border-radius: 20px; background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: all .18s; }
+.tab.active { background: var(--color-background-info); color: var(--color-text-info); border-color: transparent; }
+.tab:hover:not(.active) { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ANATOMY PANEL */
+.anatomy-layout { display: grid; grid-template-columns: 1fr 260px; gap: 1.5rem; align-items: start; }
+.svg-container { position: relative; }
+.info-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; min-height: 240px; }
+.info-card h3 { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; }
+.info-card p { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+.info-card .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 10px; margin-bottom: 8px; background: var(--color-background-info); color: var(--color-text-info); }
+.info-card .tip { font-size: 12px; color: var(--color-text-tertiary); margin-top: 10px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 8px; }
+.click-hint { font-size: 12px; color: var(--color-text-tertiary); text-align: center; margin-top: 8px; }
+.structure-btn { display: block; width: 100%; text-align: left; font-size: 12px; padding: 5px 8px; margin: 4px 0; border-radius: 6px; border: none; background: transparent; color: var(--color-text-secondary); cursor: pointer; transition: background .15s; }
+.structure-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.structure-btn.sel { background: var(--color-background-info); color: var(--color-text-info); font-weight: 500; }
+
+/* QUIZ PANEL */
+.quiz-wrap { max-width: 620px; }
+.progress-bar { height: 4px; background: var(--color-background-secondary); border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--color-text-info); border-radius: 2px; transition: width .4s ease; }
+.q-label { font-size: 12px; color: var(--color-text-tertiary); margin-bottom: 6px; }
+.q-text { font-size: 15px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 1rem; line-height: 1.5; }
+.options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+.opt-btn { padding: 10px 14px; font-size: 13px; text-align: left; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); cursor: pointer; transition: all .18s; line-height: 1.4; }
+.opt-btn:hover:not(:disabled) { background: var(--color-background-secondary); }
+.opt-btn.correct { background: var(--color-background-success); border-color: transparent; color: var(--color-text-success); font-weight: 500; }
+.opt-btn.wrong { background: var(--color-background-danger); border-color: transparent; color: var(--color-text-danger); }
+.feedback { font-size: 13px; padding: 10px 14px; border-radius: var(--border-radius-md); margin-bottom: 1rem; line-height: 1.5; }
+.feedback.ok { background: var(--color-background-success); color: var(--color-text-success); }
+.feedback.err { background: var(--color-background-danger); color: var(--color-text-danger); }
+.next-btn { padding: 8px 20px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-primary); cursor: pointer; }
+.next-btn:hover { background: var(--color-background-secondary); }
+.score-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 2rem; text-align: center; }
+.score-card .num { font-size: 48px; font-weight: 500; color: var(--color-text-primary); }
+.score-card .sub { font-size: 14px; color: var(--color-text-secondary); margin-top: 4px; }
+.restart-btn { margin-top: 1.5rem; padding: 8px 24px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: transparent; color: var(--color-text-primary); cursor: pointer; }
+.restart-btn:hover { background: var(--color-background-secondary); }
+
+/* FUNCTION PANEL */
+.phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.phase-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+.phase-card h3 { font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+.phase-card p { font-size: 12px; color: var(--color-text-secondary); line-height: 1.6; }
+.phase-card .tag { font-size: 11px; font-weight: 500; display: inline-block; padding: 2px 8px; border-radius: 10px; margin-bottom: 8px; }
+.tag-i { background: var(--color-background-info); color: var(--color-text-info); }
+.tag-e { background: var(--color-background-warning); color: var(--color-text-warning); }
+.tag-d { background: var(--color-background-success); color: var(--color-text-success); }
+.gas-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 1rem; }
+.gas-table th { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); text-align: left; padding: 6px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.gas-table td { padding: 7px 10px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+.gas-table tr:last-child td { border-bottom: none; }
+.bar-wrap { height: 8px; background: var(--color-background-secondary); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 4px; }
+</style>
+
+<div id="app">
+  <h2 class="sr-only">Actividad interactiva del sistema respiratorio — anatomía, funciones y evaluación</h2>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('anatomia')">Anatomía</button>
+    <button class="tab" onclick="showPanel('funcion')">Fisiología</button>
+    <button class="tab" onclick="showPanel('quiz')">Evaluación</button>
+  </div>
+
+  <!-- ANATOMY PANEL -->
+  <div id="panel-anatomia" class="panel active">
+    <div class="anatomy-layout">
+      <div class="svg-container">
+        <svg width="100%" viewBox="0 0 420 560" role="img">
+          <title>Diagrama anatómico del sistema respiratorio</title>
+          <desc>Vista anterior esquemática con estructuras clicables: fosas nasales, faringe, laringe, tráquea, bronquios principales, pulmones y diafragma</desc>
+          <defs>
+            <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+              <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </marker>
+          </defs>
+
+          <!-- HEAD outline -->
+          <ellipse cx="210" cy="48" rx="38" ry="44" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.8" opacity="0.35"/>
+          <!-- Nasal cavity highlight -->
+          <g id="str-nariz" class="str-group" onclick="selectStr('nariz')" style="cursor:pointer">
+            <ellipse cx="210" cy="42" rx="22" ry="18" fill="#E1F5EE" stroke="#1D9E75" stroke-width="1.2" opacity="0.85"/>
+            <text font-size="11" font-weight="500" fill="#0F6E56" x="210" y="46" text-anchor="middle" dominant-baseline="central">Fosas nasales</text>
+          </g>
+
+          <!-- NECK -->
+          <rect x="195" y="92" width="30" height="38" rx="4" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.8" opacity="0.3"/>
+
+          <!-- Pharynx -->
+          <g id="str-faringe" class="str-group" onclick="selectStr('faringe')" style="cursor:pointer">
+            <rect x="193" y="94" width="34" height="16" rx="4" fill="#EEEDFE" stroke="#534AB7" stroke-width="1"/>
+            <text font-size="9" font-weight="500" fill="#3C3489" x="210" y="102" text-anchor="middle" dominant-baseline="central">Faringe</text>
+          </g>
+
+          <!-- Larynx -->
+          <g id="str-laringe" class="str-group" onclick="selectStr('laringe')" style="cursor:pointer">
+            <rect x="193" y="114" width="34" height="16" rx="4" fill="#FAEEDA" stroke="#BA7517" stroke-width="1"/>
+            <text font-size="9" font-weight="500" fill="#633806" x="210" y="122" text-anchor="middle" dominant-baseline="central">Laringe</text>
+          </g>
+
+          <!-- Trachea -->
+          <g id="str-traquea" class="str-group" onclick="selectStr('traquea')" style="cursor:pointer">
+            <rect x="199" y="130" width="22" height="60" rx="5" fill="#E6F1FB" stroke="#185FA5" stroke-width="1.2"/>
+            <text font-size="9" font-weight="500" fill="#0C447C" x="210" y="160" text-anchor="middle" dominant-baseline="central">Tráquea</text>
+          </g>
+
+          <!-- Bronquio izq -->
+          <g id="str-bronquio-i" class="str-group" onclick="selectStr('bronquio')" style="cursor:pointer">
+            <path d="M200 190 Q180 200 160 210" fill="none" stroke="#185FA5" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+            <path d="M200 190 Q180 200 160 210" fill="none" stroke="#E6F1FB" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+          </g>
+          <!-- Bronquio der -->
+          <g id="str-bronquio-d" class="str-group" onclick="selectStr('bronquio')" style="cursor:pointer">
+            <path d="M220 190 Q242 200 260 210" fill="none" stroke="#185FA5" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+            <path d="M220 190 Q242 200 260 210" fill="none" stroke="#E6F1FB" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+          </g>
+
+          <!-- Pulmón izquierdo -->
+          <g id="str-pulmon-i" class="str-group" onclick="selectStr('pulmon')" style="cursor:pointer">
+            <path d="M90 215 Q60 240 58 300 Q55 360 80 400 Q110 435 145 430 Q175 425 182 390 Q188 350 185 300 Q182 250 175 220 Q165 205 152 205 Q130 205 115 208 Z" fill="#FAECE7" stroke="#993C1D" stroke-width="1.2" opacity="0.85"/>
+            <!-- Lóbulos líneas -->
+            <path d="M80 290 Q130 295 180 280" fill="none" stroke="#D85A30" stroke-width="0.7" opacity="0.5" stroke-dasharray="4 3"/>
+            <path d="M72 355 Q120 360 178 345" fill="none" stroke="#D85A30" stroke-width="0.7" opacity="0.5" stroke-dasharray="4 3"/>
+            <text font-size="11" font-weight="500" fill="#993C1D" x="130" y="320" text-anchor="middle" dominant-baseline="central">Pulmón izq.</text>
+          </g>
+
+          <!-- Pulmón derecho -->
+          <g id="str-pulmon-d" class="str-group" onclick="selectStr('pulmon')" style="cursor:pointer">
+            <path d="M330 215 Q360 240 362 300 Q365 360 340 400 Q310 435 275 430 Q245 425 238 390 Q232 350 235 300 Q238 250 245 220 Q255 205 268 205 Q290 205 305 208 Z" fill="#FAECE7" stroke="#993C1D" stroke-width="1.2" opacity="0.85"/>
+            <path d="M340 290 Q290 295 240 280" fill="none" stroke="#D85A30" stroke-width="0.7" opacity="0.5" stroke-dasharray="4 3"/>
+            <path d="M348 355 Q300 360 242 345" fill="none" stroke="#D85A30" stroke-width="0.7" opacity="0.5" stroke-dasharray="4 3"/>
+            <text font-size="11" font-weight="500" fill="#993C1D" x="295" y="320" text-anchor="middle" dominant-baseline="central">Pulmón der.</text>
+          </g>
+
+          <!-- Bronquiolos esquema izq -->
+          <path d="M160 210 Q145 240 140 270 M160 210 Q150 245 155 280 M160 210 Q165 235 168 265" fill="none" stroke="#378ADD" stroke-width="1" opacity="0.5"/>
+          <!-- Bronquiolos esquema der -->
+          <path d="M260 210 Q275 240 280 270 M260 210 Q270 245 265 280 M260 210 Q255 235 252 265" fill="none" stroke="#378ADD" stroke-width="1" opacity="0.5"/>
+
+          <!-- Alveolos representación -->
+          <g id="str-alveolo" class="str-group" onclick="selectStr('alveolo')" style="cursor:pointer">
+            <circle cx="130" cy="370" r="14" fill="#EAF3DE" stroke="#639922" stroke-width="1"/>
+            <circle cx="110" cy="382" r="11" fill="#EAF3DE" stroke="#639922" stroke-width="1"/>
+            <circle cx="148" cy="384" r="12" fill="#EAF3DE" stroke="#639922" stroke-width="1"/>
+            <text font-size="9" font-weight="500" fill="#3B6D11" x="128" y="398" text-anchor="middle">Alvéolos</text>
+            <circle cx="283" cy="370" r="14" fill="#EAF3DE" stroke="#639922" stroke-width="1"/>
+            <circle cx="263" cy="382" r="11" fill="#EAF3DE" stroke="#639922" stroke-width="1"/>
+            <circle cx="302" cy="384" r="12" fill="#EAF3DE" stroke="#639922" stroke-width="1"/>
+          </g>
+
+          <!-- Diafragma -->
+          <g id="str-diafragma" class="str-group" onclick="selectStr('diafragma')" style="cursor:pointer">
+            <path d="M60 445 Q130 420 210 418 Q290 420 360 445" fill="none" stroke="#D4537E" stroke-width="3.5" stroke-linecap="round" opacity="0.8"/>
+            <path d="M60 445 Q130 420 210 418 Q290 420 360 445" fill="none" stroke="#FBEAF0" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+            <text font-size="11" font-weight="500" fill="#993556" x="210" y="460" text-anchor="middle" dominant-baseline="central">Diafragma</text>
+          </g>
+
+          <!-- Costillas esquema derecho -->
+          <path d="M242 235 Q310 240 340 255" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.7" opacity="0.2" stroke-dasharray="3 3"/>
+          <path d="M241 258 Q311 263 342 278" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.7" opacity="0.2" stroke-dasharray="3 3"/>
+          <path d="M240 280 Q308 285 340 300" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.7" opacity="0.2" stroke-dasharray="3 3"/>
+          <!-- Costillas izquierdo -->
+          <path d="M178 235 Q110 240 80 255" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.7" opacity="0.2" stroke-dasharray="3 3"/>
+          <path d="M179 258 Q109 263 78 278" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.7" opacity="0.2" stroke-dasharray="3 3"/>
+          <path d="M180 280 Q112 285 80 300" fill="none" stroke="var(--color-text-secondary)" stroke-width="0.7" opacity="0.2" stroke-dasharray="3 3"/>
+
+          <!-- Pleura hint label -->
+          <text font-size="9" fill="var(--color-text-tertiary)" x="58" y="240" text-anchor="middle">pleura</text>
+          <path d="M58 243 Q62 280 70 310" fill="none" stroke="var(--color-border-secondary)" stroke-width="0.5" stroke-dasharray="3 2"/>
+        </svg>
+        <p class="click-hint"><i class="ti ti-hand-click" aria-hidden="true"></i> Toca una estructura para explorarla</p>
+      </div>
+      <div>
+        <div class="info-card" id="info-box">
+          <p style="color:var(--color-text-tertiary); font-size:13px; margin-top:2rem; text-align:center">Selecciona una estructura del diagrama para ver su descripción anatómica y relevancia clínica.</p>
+        </div>
+        <div style="margin-top:1rem; background:var(--color-background-primary); border:0.5px solid var(--color-border-tertiary); border-radius:var(--border-radius-lg); padding:1rem;">
+          <p style="font-size:12px; font-weight:500; color:var(--color-text-secondary); margin-bottom:6px">Estructuras</p>
+          <button class="structure-btn" id="btn-nariz"     onclick="selectStr('nariz')">Fosas nasales</button>
+          <button class="structure-btn" id="btn-faringe"   onclick="selectStr('faringe')">Faringe</button>
+          <button class="structure-btn" id="btn-laringe"   onclick="selectStr('laringe')">Laringe</button>
+          <button class="structure-btn" id="btn-traquea"   onclick="selectStr('traquea')">Tráquea</button>
+          <button class="structure-btn" id="btn-bronquio"  onclick="selectStr('bronquio')">Bronquios</button>
+          <button class="structure-btn" id="btn-pulmon"    onclick="selectStr('pulmon')">Pulmones</button>
+          <button class="structure-btn" id="btn-alveolo"   onclick="selectStr('alveolo')">Alvéolos</button>
+          <button class="structure-btn" id="btn-diafragma" onclick="selectStr('diafragma')">Diafragma</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FUNCTION PANEL -->
+  <div id="panel-funcion" class="panel">
+    <div class="phases">
+      <div class="phase-card">
+        <span class="tag tag-i">Inspiración</span>
+        <h3>Fase activa</h3>
+        <p>El diafragma se contrae y aplana (↓). Los músculos intercostales externos elevan el tórax. El volumen intratorácico ↑ → presión intrapleural ↓ → entrada de aire.</p>
+      </div>
+      <div class="phase-card">
+        <span class="tag tag-e">Espiración</span>
+        <h3>Fase pasiva (reposo)</h3>
+        <p>El diafragma se relaja y asciende. El retroceso elástico pulmonar ↓ el volumen torácico → presión ↑ → salida de aire. En esfuerzo intervienen músculos accesorios.</p>
+      </div>
+      <div class="phase-card">
+        <span class="tag tag-d">Difusión</span>
+        <h3>Intercambio gaseoso</h3>
+        <p>En la membrana alvéolo-capilar (< 1 µm). El O₂ difunde hacia la sangre y el CO₂ hacia el alvéolo según gradiente de presión parcial (Ley de Fick).</p>
+      </div>
+    </div>
+
+    <table class="gas-table" style="margin-top:1.5rem">
+      <thead>
+        <tr>
+          <th>Gas</th>
+          <th>pO₂ / pCO₂ alveolar</th>
+          <th>pO₂ / pCO₂ venoso</th>
+          <th>Dirección de difusión</th>
+          <th style="min-width:120px">Gradiente</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>O₂</strong></td>
+          <td>100 mmHg</td>
+          <td>40 mmHg</td>
+          <td>Alvéolo → sangre</td>
+          <td><div class="bar-wrap"><div class="bar-fill" style="width:75%; background:#185FA5;"></div></div></td>
+        </tr>
+        <tr>
+          <td><strong>CO₂</strong></td>
+          <td>40 mmHg</td>
+          <td>46 mmHg</td>
+          <td>Sangre → alvéolo</td>
+          <td><div class="bar-wrap"><div class="bar-fill" style="width:12%; background:#993C1D;"></div></div></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:1.5rem; display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:10px">
+      <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:1rem;">
+        <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:2px">Volumen corriente (VT)</p>
+        <p style="font-size:22px; font-weight:500">500 mL</p>
+      </div>
+      <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:1rem;">
+        <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:2px">FR normal adulto</p>
+        <p style="font-size:22px; font-weight:500">12–20 rpm</p>
+      </div>
+      <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:1rem;">
+        <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:2px">Capacidad pulmonar total</p>
+        <p style="font-size:22px; font-weight:500">~6 L</p>
+      </div>
+      <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:1rem;">
+        <p style="font-size:12px; color:var(--color-text-secondary); margin-bottom:2px">Superficie alvéolo-cap.</p>
+        <p style="font-size:22px; font-weight:500">~70 m²</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ PANEL -->
+  <div id="panel-quiz" class="panel">
+    <div class="quiz-wrap" id="quiz-container"></div>
+  </div>
+</div>
+
+<script>
+const STRUCTURES = {
+  nariz: {
+    name: 'Fosas nasales',
+    category: 'Vía aérea superior',
+    text: 'Primera porción de la vía aérea. Cumple funciones de filtrado (pelos nasales y moco), calentamiento y humidificación del aire inspirado. El epitelio pseudoestratificado ciliado y las células caliciformes producen la capa mucociliar.',
+    clinico: 'La rinitis alérgica y la desviación de tabique son causas frecuentes de obstrucción. La pérdida del olfato (anosmia) puede ser signo de patología neurológica o infecciosa.'
+  },
+  faringe: {
+    name: 'Faringe',
+    category: 'Vía aérea superior',
+    text: 'Conducto musculomembranoso compartido entre el sistema digestivo y respiratorio. Se divide en nasofaringe, orofaringe e hipofaringe. Es la zona de cruce que obliga a la epiglotis a proteger la vía aérea durante la deglución.',
+    clinico: 'La apnea obstructiva del sueño ocurre frecuentemente por colapso a nivel de la orofaringe. Las infecciones faríngeas pueden ascender a la trompa de Eustaquio y causar otitis media.'
+  },
+  laringe: {
+    name: 'Laringe',
+    category: 'Vía aérea superior',
+    text: 'Órgano de la fonación y guardián de la vía aérea. Contiene las cuerdas vocales verdaderas (pliegues vocales). La epiglotis cubre la glotis durante la deglución. Formada por 9 cartílagos, siendo el tiroides el más visible externamente.',
+    clinico: 'El laringoespasmo es una emergencia que ocurre ante irritación brusca. El crup (laringotraqueobronquitis viral) produce el característico estridor inspiratorio en niños.'
+  },
+  traquea: {
+    name: 'Tráquea',
+    category: 'Vía aérea',
+    text: 'Tubo de ~10–12 cm formado por 16–20 anillos cartilaginosos en forma de C. La pared posterior (membrana fibroelástica) contacta con el esófago. Se bifurca a nivel de T4–T5 en la carina traqueal formando los bronquios principales.',
+    clinico: 'La intubación orotraqueal y la traqueostomía son procedimientos críticos en kinesiología respiratoria. La aspiración de cuerpos extraños es más frecuente en el bronquio derecho por su ángulo más vertical.'
+  },
+  bronquio: {
+    name: 'Bronquios',
+    category: 'Árbol bronquial',
+    text: 'Bronquio derecho más corto, ancho y vertical (≈25°). Bronquio izquierdo más largo y horizontal (≈45°). Se dividen sucesivamente: lobares → segmentarios → subsegmentarios → bronquiolos terminales → bronquiolos respiratorios.',
+    clinico: 'Los bronquiolos carecen de cartílago, por lo que son susceptibles al broncoespasmo (asma). La broncoscopia permite visualizar hasta los bronquios segmentarios. En EPOC, la inflamación crónica destruye las paredes bronquiolares.'
+  },
+  pulmon: {
+    name: 'Pulmones',
+    category: 'Órgano principal',
+    text: 'El pulmón derecho tiene 3 lóbulos (superior, medio, inferior); el izquierdo 2 (superior e inferior) con la língula. Cubiertos por pleura visceral (adherida) y parietal (caja torácica). El espacio pleural contiene ~10–20 mL de líquido lubricante.',
+    clinico: 'El neumotórax es la acumulación de aire en el espacio pleural, que colapsa el pulmón. La auscultación comparativa bilateral es clave en kinesiología. La fisioterapia respiratoria mejora la ventilación en secciones hipoventiladas.'
+  },
+  alveolo: {
+    name: 'Alvéolos',
+    category: 'Unidad funcional',
+    text: 'Unidad funcional del intercambio gaseoso. Existen ~300–500 millones en total. Tapizados por neumocitos tipo I (intercambio) y tipo II (síntesis de surfactante). El surfactante reduce la tensión superficial previniendo el colapso alveolar.',
+    clinico: 'El síndrome de distrés respiratorio agudo (SDRA) cursa con daño alveolar difuso. La falta de surfactante en prematuros causa la enfermedad de membrana hialina. La PaO₂/FiO₂ es el índice de eficiencia de intercambio gaseoso.'
+  },
+  diafragma: {
+    name: 'Diafragma',
+    category: 'Músculo principal de la respiración',
+    text: 'Músculo abovedado que separa tórax de abdomen. Principal músculo inspiratorio (aporta ~70% del trabajo ventilatorio en reposo). Inervado por el nervio frénico (C3-C4-C5). Su contracción aplana la cúpula y aumenta el volumen torácico.',
+    clinico: 'La parálisis frénica (lesión medular C3-C4) requiere ventilación mecánica. El hipo es una contracción espasmódica involuntaria. La fatiga diafragmática es factor clave en la decisión de intubar a un paciente crítico.'
+  }
+};
+
+function selectStr(id) {
+  const s = STRUCTURES[id];
+  if (!s) return;
+  document.querySelectorAll('.structure-btn').forEach(b => b.classList.remove('sel'));
+  const btn = document.getElementById('btn-' + id);
+  if (btn) btn.classList.add('sel');
+  document.getElementById('info-box').innerHTML = `
+    <span class="badge">${s.category}</span>
+    <h3>${s.name}</h3>
+    <p>${s.text}</p>
+    <p class="tip"><strong>Relevancia clínica:</strong> ${s.clinico}</p>
+  `;
+}
+
+// QUIZ
+const QUESTIONS = [
+  { q: '¿Cuál es la función principal del surfactante pulmonar?', opts: ['Transportar O₂ en sangre','Reducir la tensión superficial alveolar','Filtrar partículas del aire','Regular el pH sanguíneo'], ans: 1, exp: 'El surfactante producido por neumocitos tipo II reduce la tensión superficial, previniendo el colapso alveolar (atelectasia) durante la espiración.' },
+  { q: '¿A qué nivel vertebral se bifurca la tráquea en los bronquios principales (carina)?', opts: ['C7–T1','T2–T3','T4–T5','T6–T7'], ans: 2, exp: 'La bifurcación traqueal ocurre en la carina a nivel de T4–T5. Este es un punto de referencia anatómica importante en broncoscopia e intubación.' },
+  { q: 'Durante la inspiración en reposo, ¿qué sucede con el diafragma?', opts: ['Se relaja y asciende','Se contrae y desciende','Permanece en posición neutra','Se contrae y asciende'], ans: 1, exp: 'El diafragma se contrae y aplana (desciende), aumentando el volumen intratorácico y generando presión negativa que atrae el aire hacia los pulmones.' },
+  { q: '¿Cuántos lóbulos tiene el pulmón derecho?', opts: ['2 lóbulos','3 lóbulos','4 lóbulos','5 lóbulos'], ans: 1, exp: 'El pulmón derecho tiene 3 lóbulos: superior, medio e inferior. El pulmón izquierdo tiene 2 (superior e inferior) debido al espacio que ocupa el corazón.' },
+  { q: '¿Qué estructura impide el ingreso de alimentos a la vía aérea durante la deglución?', opts: ['Úvula','Cuerdas vocales','Epiglotis','Tráquea'], ans: 2, exp: 'La epiglotis es un cartílago en forma de hoja que cubre la glotis durante la deglución, protegiendo la vía aérea del ingreso de alimentos y líquidos.' },
+  { q: 'En el intercambio gaseoso, el CO₂ difunde desde...', opts: ['Sangre → alvéolo, porque pCO₂ venosa (46) > pCO₂ alveolar (40)','Alvéolo → sangre, porque pCO₂ alveolar > pCO₂ venosa','Sangre → alvéolo, por transporte activo','Ninguna de las anteriores'], ans: 0, exp: 'El CO₂ difunde pasivamente desde la sangre venosa (pCO₂ ≈ 46 mmHg) hacia el alvéolo (pCO₂ ≈ 40 mmHg), siguiendo su gradiente de presión parcial (Ley de Fick).' },
+  { q: '¿Por qué la aspiración de cuerpos extraños es más frecuente en el bronquio derecho?', opts: ['Es más largo','Es más corto y angosto','Es más corto, ancho y con menor ángulo (más vertical)','Tiene más receptores de la tos'], ans: 2, exp: 'El bronquio principal derecho forma un ángulo de ≈25° con la tráquea (el izquierdo ≈45°), además de ser más corto y de mayor calibre, lo que facilita que los cuerpos extraños caigan por gravedad hacia él.' },
+  { q: '¿Cuál es el nervio que inerva el diafragma?', opts: ['Nervio vago (X)','Nervio frénico (C3–C4–C5)','Nervio intercostal','Nervio hipogloso (XII)'], ans: 1, exp: 'El nervio frénico (C3–C4–C5) inerva el diafragma. Una lesión medular a nivel C3–C4 puede causar parálisis diafragmática y dependencia de ventilación mecánica.' }
+];
+
+let qi = 0, score = 0, answered = false;
+function renderQ() {
+  const q = QUESTIONS[qi];
+  const pct = (qi / QUESTIONS.length * 100).toFixed(0);
+  document.getElementById('quiz-container').innerHTML = `
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <p class="q-label">Pregunta ${qi+1} de ${QUESTIONS.length}</p>
+    <p class="q-text">${q.q}</p>
+    <div class="options">
+      ${q.opts.map((o,i) => `<button class="opt-btn" id="opt${i}" onclick="answerQ(${i})">${o}</button>`).join('')}
+    </div>
+    <div id="feedback"></div>
+    <div id="next-wrap"></div>
+  `;
+  answered = false;
+}
+function answerQ(i) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[qi];
+  const correct = i === q.ans;
+  if (correct) score++;
+  document.querySelectorAll('.opt-btn').forEach((b,idx) => {
+    b.disabled = true;
+    if (idx === q.ans) b.classList.add('correct');
+    if (idx === i && !correct) b.classList.add('wrong');
+  });
+  document.getElementById('feedback').innerHTML = `<div class="feedback ${correct?'ok':'err'}">${correct ? '✓ Correcto. ' : '✗ Incorrecto. '}${q.exp}</div>`;
+  document.getElementById('next-wrap').innerHTML = `<button class="next-btn" onclick="nextQ()">${qi+1 < QUESTIONS.length ? 'Siguiente →' : 'Ver resultado'}</button>`;
+}
+function nextQ() {
+  qi++;
+  if (qi >= QUESTIONS.length) showScore();
+  else renderQ();
+}
+function showScore() {
+  const pct = Math.round(score/QUESTIONS.length*100);
+  let msg = pct >= 80 ? '¡Excelente dominio!' : pct >= 60 ? 'Buen trabajo, sigue repasando.' : 'Revisa los contenidos y vuelve a intentarlo.';
+  document.getElementById('quiz-container').innerHTML = `
+    <div class="score-card">
+      <div class="num">${score}/${QUESTIONS.length}</div>
+      <div class="sub">${pct}% — ${msg}</div>
+      <button class="restart-btn" onclick="restartQ()">Reintentar</button>
+    </div>
+  `;
+}
+function restartQ() { qi = 0; score = 0; renderQ(); }
+
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if (id === 'quiz') renderQ();
+}
+
+renderQ();
+</script>
